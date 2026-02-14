@@ -1,0 +1,20 @@
+{
+  "name": "rto-games",
+  "version": "0.0.1",
+  "description": "Release the Owl - Web-based multiplayer games platform",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm -r dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test --if-present",
+    "lint": "pnpm -r lint --if-present",
+    "type-check": "pnpm -r type-check --if-present"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
