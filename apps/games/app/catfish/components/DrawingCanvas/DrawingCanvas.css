@@ -1,0 +1,257 @@
+/* ------------------------------------------------------------------ */
+/*  DrawingCanvas component styles                                     */
+/* ------------------------------------------------------------------ */
+
+.drawing-canvas-root {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.drawing-canvas-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  align-items: center;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Toolbar (horizontal, below canvas)                                 */
+/* ------------------------------------------------------------------ */
+
+.drawing-canvas-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 10px;
+  /* background: #f5f3e8;
+  border: 2px solid #d4d0c0; */
+  border-radius: 8px;
+}
+
+.drawing-canvas-toolbar-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.drawing-canvas-divider-v {
+  width: 2px;
+  align-self: stretch;
+  /* background: #d4d0c0; */
+  margin: 0 10px;
+  flex-shrink: 0;
+}
+
+.drawing-canvas-divider-h {
+  height: 1px;
+  width: 100%;
+  /* background: #d4d0c0; */
+  margin: 8px 0;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Colour swatches                                                    */
+/* ------------------------------------------------------------------ */
+
+.drawing-canvas-colors {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  justify-items: center;
+}
+
+.drawing-canvas-color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    transform 0.1s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.drawing-canvas-color-swatch:hover {
+  transform: scale(1.15);
+}
+
+.drawing-canvas-color-swatch.active {
+  border-color: #1a1a1a;
+  transform: scale(1.15);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Tool buttons (pen, eraser, undo, redo, clear)                      */
+/* ------------------------------------------------------------------ */
+
+.drawing-canvas-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+.drawing-canvas-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  align-items: center;
+}
+
+.drawing-canvas-tool-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #d4d0c0;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  color: #555;
+  transition:
+    background-color 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+  padding: 6px;
+}
+
+.drawing-canvas-tool-btn:hover:not(:disabled) {
+  background: #eee;
+}
+
+.drawing-canvas-tool-btn.active {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+.drawing-canvas-tool-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.drawing-canvas-tool-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.drawing-canvas-clear-btn:hover:not(:disabled) {
+  background: #fee2e2;
+  border-color: #f87171;
+  color: #dc2626;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Brush sizes                                                        */
+/* ------------------------------------------------------------------ */
+
+.drawing-canvas-sizes {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  align-items: center;
+}
+
+.drawing-canvas-size-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #d4d0c0;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+
+.drawing-canvas-size-btn:hover {
+  background: #eee;
+}
+
+.drawing-canvas-size-btn.active {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+}
+
+.drawing-canvas-size-dot {
+  border-radius: 50%;
+  background: #555;
+  display: block;
+  transition: background-color 0.15s;
+}
+
+.drawing-canvas-size-btn.active .drawing-canvas-size-dot {
+  background: #fff;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Canvas container – responsive, aspect-ratio aware                  */
+/* ------------------------------------------------------------------ */
+
+.drawing-canvas-container {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drawing-canvas-aspect-box {
+  position: relative;
+  width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  border: 3px dashed #bbb;
+  border-radius: 4px;
+  background: #fff;
+  /* aspect-ratio set via inline style */
+}
+
+.drawing-canvas-element {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Responsive tweaks                                                  */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 400px) {
+  .drawing-canvas-toolbar {
+    padding: 6px;
+    gap: 6px;
+  }
+
+  .drawing-canvas-color-swatch {
+    width: 22px;
+    height: 22px;
+  }
+
+  .drawing-canvas-tool-btn,
+  .drawing-canvas-size-btn {
+    width: 30px;
+    height: 30px;
+    padding: 4px;
+  }
+
+  .drawing-canvas-tool-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+}

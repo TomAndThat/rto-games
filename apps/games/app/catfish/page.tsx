@@ -1,12 +1,31 @@
-export default function CatfishGame() {
-  return (
-    <div
-      className="flex items-center justify-center w-full min-h-screen"
-      style={{
-        backgroundImage: "url('/images/catfish/catfish-bg-1.webp')",
-        backgroundRepeat: "repeat",
-        backgroundPosition: "center",
-      }}
-    ></div>
-  );
+"use client";
+
+import { useState } from "react";
+
+// Load Views
+import LandingPage from "./views/LandingPage/page";
+import ProfilePic from "./views/ProfilePic/page";
+import EnterName from "./views/EnterName/page";
+import Lobby from "./views/Lobby/page";
+
+export default function CatfishPage() {
+  // Change this value to toggle between views during development
+  // Options: 'landing' | 'profile_pic' | 'enter_name' | 'lobby'
+  const [state, setState] = useState<
+    "landing" | "profile_pic" | "enter_name" | "lobby"
+  >("lobby");
+
+  // Router
+  switch (state) {
+    case "landing":
+      return <LandingPage />;
+    case "profile_pic":
+      return <ProfilePic />;
+    case "enter_name":
+      return <EnterName />;
+    case "lobby":
+      return <Lobby />;
+    default:
+      return <LandingPage />;
+  }
 }

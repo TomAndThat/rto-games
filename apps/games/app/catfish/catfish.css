@@ -1,0 +1,33 @@
+/* Catfish Game Color Palette */
+/* Route-scoped CSS variables - only loaded for /catfish routes */
+
+:root {
+  /* EXAMPLE: Primary palette - main game colors */
+  /* --catfish-primary: #0ea5e9;
+  --catfish-primary-dark: #0284c7;
+  --catfish-primary-light: #38bdf8; */
+
+  /* Background colors */
+  --catfish-bg: #fbf9ed; /* Light background */
+}
+
+/* Novecento Sans is used for headings and display text only.
+   Body text uses Rubik (set globally in root layout). */
+
+.handwritten {
+  font-family: var(--font-playpen-sans);
+}
+
+/* Buttons */
+.catfish-button-bg-purple {
+  background-color: var(--owl-purple);
+  mix-blend-mode: multiply;
+}
+
+/* Inputs */
+input[type="text"] {
+  font-size: 1.1em;
+  background-color: rgba(0, 0, 0, 0);
+  z-index: 10;
+  position: relative;
+}

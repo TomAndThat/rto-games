@@ -1,0 +1,15 @@
+There's a bit of work we're going to do on our first game within the games app, the catfish game, and we're going to kill two birds with one stone here. Because what we're going to do is we're going to set the game up so that users can get as far as the lobby stage. So they can create a new game or they can join an existing game and that will take them to the lobby.
+
+In doing so, we'll develop out a re-usable package which will handle the pre-game setup for all of our games - something we can use repeatedly across a large number of titles.
+
+To my mind, the key functions are:
+
+New game - creates the game
+Join game - adds the user to the game
+Remove player from game - removes a player from the game. If the player happens to be the host (game creator) then *everyone* is removed and the game is deleted
+
+Before creating or joining the game, users should have to create a username, if they haven't already (we'll use firebase's anonymous auth and a firestore doc to handle this)
+
+Although the package should be able to work out-of-the-box across any game we create, we should be able to specify game-specific requirements. In the case of the catfish game, players will also need to draw a profile picture before they can be added to the lobby. The logic for creating/saving the profile picture clearly cannot be part of the shared package, but the shared package must also know that the player cannot be added to the lobby without it, and must therefore be directed to the create profile picture view at the appropriate stage.
+
+I appreciate there are a lot of questions to be answered here before we can actually begin. Please can you review the copilot instructions and the codebase

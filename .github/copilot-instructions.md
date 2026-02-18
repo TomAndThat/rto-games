@@ -101,4 +101,5 @@ npm run type-check       # TypeScript checks across workspaces
 
 ## Reference
 
-See [docs/FOUNDATION.md](../../docs/FOUNDATION.md) for architecture rationale, design decisions, and TBD items (auth, Firestore rules, analytics, etc.).
+- See [docs/FOUNDATION.md](../../docs/FOUNDATION.md) for architecture rationale, design decisions, and TBD items (auth, Firestore rules, analytics, etc.)
+- See [docs/DEVELOPER_STANDARDS.md](../../docs/DEVELOPER_STANDARDS.md) for comprehensive coding standards that all code must adhere to (TypeScript, naming, testing, Git conventions, etc.)
