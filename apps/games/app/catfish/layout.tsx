@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Playpen_Sans } from "next/font/google";
 import "./catfish.css";
 import { UIProvider } from "./contexts/UIContext";
+import { CatfishGameProvider } from "./contexts/GameContext";
 
 const playpenSans = Playpen_Sans({
   variable: "--font-playpen-sans",
@@ -18,9 +19,11 @@ export const metadata: Metadata = {
 export default function CatfishLayout({ children }: { children: ReactNode }) {
   return (
     <UIProvider>
-      <div className={`${playpenSans.variable} bg-[var(--catfish-bg)]`}>
-        {children}
-      </div>
+      <CatfishGameProvider>
+        <div className={`${playpenSans.variable} bg-[var(--catfish-bg)]`}>
+          {children}
+        </div>
+      </CatfishGameProvider>
     </UIProvider>
   );
 }

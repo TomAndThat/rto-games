@@ -106,6 +106,176 @@ showNotification({
 
 ---
 
+## Game Document Schema
+
+> **Status: Draft — under discussion, not yet implemented**
+
+### Overview
+
+The core package manages the game document through the lobby phase, writing to a game-type-specific collection (e.g. `catfishGames/{gameId}`). This means there is a single document per game instance — no separate core document and game document. The collection name is passed as a parameter to the core package.
+
+When the game starts, the `startGame` function transitions `status` from `lobby` → `playing`, writes the full `phases` array to the document, and populates the `players` map with Catfish-specific fields. From that point, `currentPhaseIndex` is the single source of truth for where the game is.
+
+---
+
+### Prompt Collections (global, not per-game)
+
+Three top-level Firestore collections hold the shared pool of prompts:
+
+```
+/textPrompts/{promptId}
+  text: string
+  isActive: boolean
+  createdAt: Timestamp
+
+/imagePrompts/{promptId}
+  text: string
+  isActive: boolean
+  createdAt: Timestamp
+
+/votingPrompts/{promptId}
+  text: string           ← contains {playerName} placeholder for runtime substitution
+  isActive: boolean
+  createdAt: Timestamp
+```
+
+Only prompts where `isActive: true` are eligible for selection. Text and image prompts are assigned uniquely per player per game. Voting prompts can repeat.
+
+---
+
+### `catfishGames/{gameId}` Document
+
+#### Top-level fields
+
+```
+gameCode: string
+gameType: 'catfish'
+hostUid: string
+status: 'lobby' | 'playing' | 'finished'
+minPlayers: number
+maxPlayers: number
+createdAt: Timestamp
+currentPhaseIndex: number     ← index into the phases array; the single source of truth
+                                 for game progression. All clients watch this field.
+phaseDeadline: Timestamp      ← when the current timed window expires (server-set).
+                                 Reset by the server each time currentPhaseIndex advances.
+players: { ... }              ← see Players map below
+phases: [ ... ]               ← see Phases array below
+```
+
+---
+
+#### Players map
+
+Per-player data for the Catfish game. Keyed by player UID.
+
+```
+players:
+  [playerId]:
+    username: string
+    joinedAt: Timestamp
+    isHost: boolean
+    profilePictureUrl: string | null  ← Firebase Storage URL; set during profile picture phase
+    score: number                     ← running total, incremented after each voting phase
+```
+
+---
+
+#### Phases array
+
+The `phases` array is the complete, ordered playlist of game events. It is written in full when `startGame` is called and never reordered. The game engine reads `phases[currentPhaseIndex]` to determine what to render.
+
+Each phase has a `type` field. Currently defined types:
+
+| Type              | Description                                                                                                                                |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `textPromptIntro` | First text prompt round — identical data shape to `textPrompt` but signals the client to render guided introductory copy between questions |
+| `textPrompt`      | Subsequent text prompt rounds                                                                                                              |
+| `imagePrompt`     | Image (drawing) prompt rounds                                                                                                              |
+| `voting`          | Vote on the previous prompt round                                                                                                          |
+
+**Default phase order for a standard Catfish game:**
+
+```
+0: textPromptIntro
+1: voting          ← linkedPhaseIndex: 0
+2: imagePrompt
+3: voting          ← linkedPhaseIndex: 2
+4: textPrompt
+5: voting          ← linkedPhaseIndex: 4
+6: imagePrompt
+7: voting          ← linkedPhaseIndex: 6
+8: results
+```
+
+---
+
+#### Prompt phase shape (`textPromptIntro` | `textPrompt` | `imagePrompt`)
+
+```
+phases[n]:
+  type: 'textPromptIntro' | 'textPrompt' | 'imagePrompt'
+  questionIndex: number           ← 0–2, which of the 3 questions the room is currently on.
+                                     Advanced by the server when phaseDeadline expires or all
+                                     responses are submitted.
+  prompts:                        ← map keyed by the prompt owner's playerId
+    [playerId]:
+      promptId: string            ← ref to the source textPrompts / imagePrompts doc
+      promptText: string          ← denormalised for display; avoids extra reads at runtime
+      answerers: string[]         ← [realPlayerId, catfish1Id, catfish2Id]
+                                     index 0 is always the genuine player
+      shuffledAnswerers: string[] ← answerers in randomised display order, pre-computed
+                                     server-side at game start to ensure all clients see
+                                     the same order
+      responses:
+        [answererId]: string | null ← text answer or Firebase Storage URL for images;
+                                      null = no submission (timed out or left blank)
+```
+
+---
+
+#### Voting phase shape
+
+```
+phases[n]:
+  type: 'voting'
+  linkedPhaseIndex: number        ← index of the prompt phase this voting round scores
+  votingPromptText: string        ← e.g. "Will the real {playerName} please stand up?"
+                                     {playerName} substituted at display time
+  votingOrder: string[]           ← ordered list of prompt-owner playerIds to vote through
+  currentVotingIndex: number      ← current position in votingOrder; advanced by server
+  votes:
+    [promptOwnerId]:              ← the player whose prompt is being voted on
+      [voterId]: string           ← the answererId the voter picked
+```
+
+---
+
+### Key Design Decisions
+
+**Single document per game**
+The core package writes to a game-type-specific collection (e.g. `catfishGames`), passed as a parameter. There is no separate core document — one document handles both lobby and gameplay state.
+
+**Phases as a playlist**
+The full phases array is pre-computed and written at game start. Adding interstitials, ad breaks, or other event types is as simple as inserting a new phase type into the array — the game engine reads `phases[currentPhaseIndex].type` and renders accordingly.
+
+**`textPromptIntro` for the first round**
+Structurally identical to `textPrompt` but signals the client to render guided introductory copy between questions. Subsequent rounds use `textPrompt` and skip the onboarding copy.
+
+**`answerers[0]` is always the real player**
+The genuine response can always be derived server-side without an extra field. `shuffledAnswerers` provides the display order to clients, pre-computed at game start so all clients see the same sequence.
+
+**Why denormalise `promptText`?**
+Avoids each client fetching the prompt document separately during gameplay. The text is read once at game start and embedded in the game document.
+
+**Scores: running total**
+Scores are incremented after each voting phase rather than derived at the end. This enables a live leaderboard without aggregating all vote data on the client.
+
+**`phaseDeadline` at the top level**
+A single `phaseDeadline` timestamp, reset by the server each time `currentPhaseIndex` or `questionIndex` advances. Clients display a countdown derived from this value.
+
+---
+
 ## Technical Decisions
 
 ### Why Context Over State Management?

@@ -1,6 +1,12 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from "react";
+import {
+  useRef,
+  useState,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+} from "react";
 import "./DrawingCanvas.css";
 
 /* ------------------------------------------------------------------ */
@@ -10,6 +16,12 @@ import "./DrawingCanvas.css";
 type Tool = "pen" | "eraser";
 
 type BrushSize = "S" | "M" | "L";
+
+/** Handle exposed to parent components via the ref prop. */
+export interface DrawingCanvasHandle {
+  /** Trigger the canvas to export its image and call onSubmit. */
+  submit: () => void;
+}
 
 interface DrawingCanvasProps {
   /** Aspect ratio as a colon-separated string, e.g. "1:1", "16:9", "4:3" */
@@ -24,6 +36,8 @@ interface DrawingCanvasProps {
   onSubmit?: (dataUrl: string) => void;
   /** Optional CSS class applied to the outermost wrapper. */
   className?: string;
+  /** Ref exposing a submit() method so parents can trigger export. */
+  ref?: React.Ref<DrawingCanvasHandle>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -92,6 +106,7 @@ export function DrawingCanvas({
   backgroundColor = "#ffffff",
   onSubmit,
   className = "",
+  ref,
 }: DrawingCanvasProps) {
   /* Derived dimensions */
   const { w: ratioW, h: ratioH } = parseAspectRatio(aspectRatio);
@@ -302,6 +317,9 @@ export function DrawingCanvas({
     const dataUrl = exportImage();
     if (dataUrl && onSubmit) onSubmit(dataUrl);
   }, [exportImage, onSubmit]);
+
+  /* Expose submit to parent via ref */
+  useImperativeHandle(ref, () => ({ submit: handleSubmit }), [handleSubmit]);
 
   /* ---------------------------------------------------------------- */
   /*  Render                                                           */

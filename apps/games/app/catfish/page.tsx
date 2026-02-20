@@ -1,33 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useCatfishGame } from "./contexts/GameContext";
 
-// Load Views
-import EnterName from "./views/EnterName/page";
-import JoinGame from "./views/JoinGame/page";
-import LandingPage from "./views/LandingPage/page";
-import Lobby from "./views/Lobby/page";
-import ProfilePic from "./views/ProfilePic/page";
+import { EnterName } from "./views/EnterName";
+import { JoinGame } from "./views/JoinGame";
+import { LandingPage } from "./views/LandingPage";
+import { Lobby } from "./views/Lobby";
+import { ProfilePic } from "./views/ProfilePic";
 
 export default function CatfishPage() {
-  // Change this value to toggle between views during development
-  // Options: 'landing' | 'profile_pic' | 'enter_name' | 'lobby' | 'join_game'
-  const [state, setState] = useState<
-    "landing" | "profile_pic" | "enter_name" | "lobby" | "join_game"
-  >("landing");
+  const { currentView, isViewReady } = useCatfishGame();
 
-  // Router
-  switch (state) {
+  if (!isViewReady) {
+    return null;
+  }
+
+  switch (currentView) {
     case "landing":
       return <LandingPage />;
-    case "profile_pic":
-      return <ProfilePic />;
-    case "enter_name":
-      return <EnterName />;
-    case "lobby":
-      return <Lobby />;
     case "join_game":
       return <JoinGame />;
+    case "enter_name":
+      return <EnterName />;
+    case "profile_pic":
+      return <ProfilePic />;
+    case "lobby":
+      return <Lobby />;
     default:
       return <LandingPage />;
   }

@@ -1,7 +1,13 @@
+"use client";
+
+import { useCatfishGame } from "../../contexts/GameContext";
 import { CatfishButton } from "../../components/buttons/CatfishButton";
 import Footer from "../../components/Footer";
 
-export default function LandingPage() {
+export function LandingPage() {
+  const { handleNewGame, handleJoinGameNavigate, isAuthLoading } =
+    useCatfishGame();
+
   return (
     <div className="w-full flex flex-col items-center justify-center w-full min-h-screen">
       <div className="grow-1 flex flex-col items-center justify-center p-8">
@@ -17,10 +23,20 @@ export default function LandingPage() {
             className="mb-12 w-full h-auto relative z-5"
           />
           <div className="w-full space-y-3">
-            <CatfishButton variant="1" color="#5465ff" hoverColor="#2E3192">
+            <CatfishButton
+              variant="1"
+              color="#5465ff"
+              hoverColor="#2E3192"
+              onClick={isAuthLoading ? undefined : handleNewGame}
+            >
               New Game
             </CatfishButton>
-            <CatfishButton variant="2" color="#23CE6B" hoverColor="#10AC84">
+            <CatfishButton
+              variant="2"
+              color="#23CE6B"
+              hoverColor="#10AC84"
+              onClick={isAuthLoading ? undefined : handleJoinGameNavigate}
+            >
               Join Game
             </CatfishButton>
             <CatfishButton

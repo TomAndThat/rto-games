@@ -1,0 +1,60 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------------------------------
+    // Player documents
+    // Each player's document is readable and writable only by themselves.
+    // Used for: username, profile picture URL, current game tracking.
+    // ---------------------------------------------------------------------------
+    match /players/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // ---------------------------------------------------------------------------
+    // Catfish game documents
+    // Readable by any authenticated user (needed for real-time subscriptions
+    // and game state restoration). All writes go through API routes via the
+    // Admin SDK — the client has no write access.
+    // ---------------------------------------------------------------------------
+    match /catfish/{gameId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------------------
+    // Catfish game code lookup
+    // Readable by any authenticated user (needed for lookupGameByCode client call
+    // during join flow). All writes go through API routes via the Admin SDK.
+    // ---------------------------------------------------------------------------
+    match /catfish_code_lookup/{gameCode} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------------------
+    // Prompt collections
+    // Accessed server-side only. All prompt text is denormalised into the game
+    // document at game start — clients never need to read these directly.
+    // ---------------------------------------------------------------------------
+    match /textPrompts/{docId} {
+      allow read, write: if false;
+    }
+
+    match /imagePrompts/{docId} {
+      allow read, write: if false;
+    }
+
+    match /votingPrompts/{docId} {
+      allow read, write: if false;
+    }
+
+    // ---------------------------------------------------------------------------
+    // Deny everything else
+    // ---------------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

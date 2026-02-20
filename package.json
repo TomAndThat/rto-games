@@ -10,11 +10,27 @@
   "scripts": {
     "dev": "pnpm -r dev",
     "build": "pnpm -r build",
-    "test": "pnpm -r test --if-present",
+    "test": "pnpm -r run --if-present test",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "lint": "pnpm -r lint --if-present",
-    "type-check": "pnpm -r type-check --if-present"
+    "type-check": "pnpm -r type-check --if-present",
+    "emulators": "firebase emulators:start --project demo-rto-games",
+    "emulators:catfish": "firebase emulators:exec --project demo-rto-games 'pnpm seed:catfish' & firebase emulators:start --project demo-rto-games",
+    "seed:catfish": "tsx scripts/catfish/seedAllPrompts.ts",
+    "seed:catfish:prod": "tsx scripts/catfish/seedAllPrompts.ts --env=production",
+    "seed:text": "tsx scripts/catfish/seedTextPrompts.ts",
+    "seed:image": "tsx scripts/catfish/seedImagePrompts.ts",
+    "seed:voting": "tsx scripts/catfish/seedVotingPrompts.ts"
   },
   "devDependencies": {
-    "typescript": "^5.3.3"
+    "@playwright/test": "^1.58.2",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/ui": "^4.0.18",
+    "firebase-admin": "^13.6.1",
+    "firebase-tools": "^13.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.3.3",
+    "vitest": "^4.0.18"
   }
 }
