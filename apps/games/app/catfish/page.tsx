@@ -7,6 +7,7 @@ import { JoinGame } from "./views/JoinGame";
 import { LandingPage } from "./views/LandingPage";
 import { Lobby } from "./views/Lobby";
 import { ProfilePic } from "./views/ProfilePic";
+import { GameView } from "./views/GameView";
 
 export default function CatfishPage() {
   const { currentView, isViewReady } = useCatfishGame();
@@ -26,6 +27,8 @@ export default function CatfishPage() {
       return <ProfilePic />;
     case "lobby":
       return <Lobby />;
+    case "playing":
+      return <GameView />;
     default:
       return <LandingPage />;
   }

@@ -40,6 +40,7 @@ export const CatfishView = {
   EnterName: "enter_name",
   ProfilePic: "profile_pic",
   Lobby: "lobby",
+  Playing: "playing",
 } as const;
 export type CatfishView = (typeof CatfishView)[keyof typeof CatfishView];
 
@@ -90,6 +91,7 @@ interface CatfishGameContextValue {
   game: GameDocument | null;
   gameId: string | null;
   isGameLoading: boolean;
+  isHost: boolean;
   currentView: CatfishView;
   isViewReady: boolean;
   isSubmitting: boolean;
@@ -101,6 +103,8 @@ interface CatfishGameContextValue {
   handleRemovePlayer: (targetUid: string) => Promise<void>;
   handleLeaveGame: () => Promise<void>;
   handleStartGame: () => Promise<void>;
+  handleAdvancePhase: () => Promise<void>;
+  handleSubmitAnswer: (answer: string) => Promise<void>;
   handleBackToLanding: () => void;
 }
 
@@ -150,6 +154,21 @@ export function CatfishGameProvider({
     setPendingGameCode(null);
     setGameId(null);
   }, []);
+
+  // ---- Derived state ----
+
+  const isHost = !!(uid && game?.players[uid]?.isHost);
+
+  // ---- Detect status transition to playing ----
+
+  useEffect(() => {
+    if (
+      (currentView === "lobby" || currentView === "playing") &&
+      game?.status === "playing"
+    ) {
+      setCurrentView("playing");
+    }
+  }, [game?.status, currentView]);
 
   // ---- Detect removal from game or game deletion while in lobby ----
 
@@ -566,6 +585,75 @@ export function CatfishGameProvider({
     }
   }, [uid, gameId, showNotification]);
 
+  const handleSubmitAnswer = useCallback(
+    async (answer: string): Promise<void> => {
+      if (!uid || !gameId) return;
+      setIsSubmitting(true);
+
+      try {
+        const idToken = await getIdToken();
+        const response = await fetch("/api/catfish/submit-answer", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({ gameId, answer }),
+        });
+
+        if (!response.ok) {
+          const body = (await response.json()) as { error?: string };
+          const errorCode = body.error ?? "";
+          const userMessage =
+            ERROR_MESSAGES[errorCode] ??
+            "Something went wrong. Please try again.";
+          showNotification({ text: userMessage, bgColor: "bg-red-500" });
+        }
+      } catch {
+        showNotification({
+          text: "Something went wrong. Please try again.",
+          bgColor: "bg-red-500",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [uid, gameId, getIdToken, showNotification],
+  );
+
+  const handleAdvancePhase = useCallback(async (): Promise<void> => {
+    if (!uid || !gameId) return;
+    setIsSubmitting(true);
+
+    try {
+      const idToken = await getIdToken();
+      const response = await fetch("/api/catfish/advance-phase", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ gameId }),
+      });
+
+      if (!response.ok) {
+        const body = (await response.json()) as { error?: string };
+        const errorCode = body.error ?? "";
+        const userMessage =
+          ERROR_MESSAGES[errorCode] ??
+          "Something went wrong. Please try again.";
+        showNotification({ text: userMessage, bgColor: "bg-red-500" });
+      }
+    } catch {
+      showNotification({
+        text: "Something went wrong. Please try again.",
+        bgColor: "bg-red-500",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [uid, gameId, getIdToken, showNotification]);
+
   const handleBackToLanding = useCallback((): void => {
     resetToLanding();
   }, [resetToLanding]);
@@ -583,6 +671,7 @@ export function CatfishGameProvider({
     game,
     gameId,
     isGameLoading,
+    isHost,
     currentView,
     isViewReady,
     isSubmitting,
@@ -594,6 +683,8 @@ export function CatfishGameProvider({
     handleRemovePlayer,
     handleLeaveGame,
     handleStartGame,
+    handleAdvancePhase,
+    handleSubmitAnswer,
     handleBackToLanding,
   };
 

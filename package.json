@@ -16,12 +16,13 @@
     "lint": "pnpm -r lint --if-present",
     "type-check": "pnpm -r type-check --if-present",
     "emulators": "firebase emulators:start --project demo-rto-games",
-    "emulators:catfish": "firebase emulators:exec --project demo-rto-games 'pnpm seed:catfish' & firebase emulators:start --project demo-rto-games",
+    "emulators:catfish": "firebase emulators:start --project demo-rto-games & wait-on tcp:9099 tcp:8080 tcp:9199 && pnpm seed:catfish",
     "seed:catfish": "tsx scripts/catfish/seedAllPrompts.ts",
     "seed:catfish:prod": "tsx scripts/catfish/seedAllPrompts.ts --env=production",
     "seed:text": "tsx scripts/catfish/seedTextPrompts.ts",
     "seed:image": "tsx scripts/catfish/seedImagePrompts.ts",
-    "seed:voting": "tsx scripts/catfish/seedVotingPrompts.ts"
+    "seed:voting": "tsx scripts/catfish/seedVotingPrompts.ts",
+    "seed:instructions": "tsx scripts/catfish/seedCatfishInstructionPrompts.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
@@ -31,6 +32,7 @@
     "firebase-tools": "^13.0.0",
     "tsx": "^4.21.0",
     "typescript": "^5.3.3",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "wait-on": "^9.0.4"
   }
 }

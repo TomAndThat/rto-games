@@ -16,6 +16,7 @@ const CATFISH_COLLECTION = 'catfish';
 const TEXT_PROMPTS_COLLECTION = 'textPrompts';
 const IMAGE_PROMPTS_COLLECTION = 'imagePrompts';
 const VOTING_PROMPTS_COLLECTION = 'votingPrompts';
+const CATFISH_INSTRUCTION_PROMPTS_COLLECTION = 'catfishInstructionPrompts';
 
 /** Number of text/image prompt rounds in the game */
 const PROMPT_ROUND_COUNT = 2;
@@ -104,6 +105,8 @@ function buildPromptPhase(
   playerIds: readonly string[],
   promptPool: PromptDoc[],
   poolOffset: number,
+  catfishInstructionPool: PromptDoc[],
+  playerUsernames: Record<string, string>,
 ): CatfishPromptPhase {
   const answerersByPlayer = assignAnswerersForRound(playerIds);
 
@@ -124,6 +127,15 @@ function buildPromptPhase(
       string,
     ];
 
+    // Pick a random catfish instruction template and resolve {playerName}
+    const ownerUsername = playerUsernames[playerId] ?? 'them';
+    const instructionTemplate =
+      catfishInstructionPool[Math.floor(Math.random() * catfishInstructionPool.length)];
+    const catfishInstructionText = (instructionTemplate as PromptDoc).text.replace(
+      '{playerName}',
+      ownerUsername,
+    );
+
     // Initialise responses to null for all answerers
     const responses: Record<string, null> = {};
     for (const answererId of answerers) {
@@ -135,13 +147,14 @@ function buildPromptPhase(
       promptText: prompt.text,
       answerers,
       shuffledAnswerers,
+      catfishInstructionText,
       responses,
     };
   });
 
   return {
     type: phaseType,
-    questionIndex: 0,
+    subStep: 0,
     prompts,
   };
 }
@@ -221,7 +234,7 @@ export async function startGame(
     hostUid: string;
     status: string;
     minPlayers: number;
-    players: Record<string, unknown>;
+    players: Record<string, { username: string }>;
   };
 
   if (game.hostUid !== requestingUid) {
@@ -240,6 +253,10 @@ export async function startGame(
 
   const playerIds = Object.keys(game.players);
   const playerCount = playerIds.length;
+  const playerUsernames: Record<string, string> = {};
+  for (const [uid, player] of Object.entries(game.players)) {
+    playerUsernames[uid] = player.username;
+  }
 
   if (playerCount < game.minPlayers) {
     throw new StartGameError(
@@ -254,11 +271,19 @@ export async function startGame(
   const requiredTextPrompts = playerCount * PROMPTS_PER_PLAYER;
   const requiredImagePrompts = playerCount * PROMPTS_PER_PLAYER;
 
-  const [textPrompts, imagePrompts, votingPrompts] = await Promise.all([
+  const [textPrompts, imagePrompts, votingPrompts, catfishInstructionPrompts] = await Promise.all([
     fetchShuffledPrompts(db, TEXT_PROMPTS_COLLECTION),
     fetchShuffledPrompts(db, IMAGE_PROMPTS_COLLECTION),
     fetchShuffledPrompts(db, VOTING_PROMPTS_COLLECTION),
+    fetchShuffledPrompts(db, CATFISH_INSTRUCTION_PROMPTS_COLLECTION),
   ]);
+
+  if (catfishInstructionPrompts.length === 0) {
+    throw new StartGameError(
+      'No catfish instruction prompts available',
+      StartGameErrorCode.InsufficientPrompts,
+    );
+  }
 
   if (textPrompts.length < requiredTextPrompts) {
     throw new StartGameError(
@@ -306,6 +331,8 @@ export async function startGame(
     playerIds,
     textPrompts,
     0,
+    catfishInstructionPrompts,
+    playerUsernames,
   );
 
   const imageRound1 = buildPromptPhase(
@@ -313,20 +340,26 @@ export async function startGame(
     playerIds,
     imagePrompts,
     0,
+    catfishInstructionPrompts,
+    playerUsernames,
   );
 
   const textRound2 = buildPromptPhase(
     CatfishPhaseType.TextPrompt,
     playerIds,
     textPrompts,
-    playerCount, // second batch of text prompts
+    playerCount,
+    catfishInstructionPrompts,
+    playerUsernames,
   );
 
   const imageRound2 = buildPromptPhase(
     CatfishPhaseType.ImagePrompt,
     playerIds,
     imagePrompts,
-    playerCount, // second batch of image prompts
+    playerCount,
+    catfishInstructionPrompts,
+    playerUsernames,
   );
 
   const phases: CatfishPhase[] = [

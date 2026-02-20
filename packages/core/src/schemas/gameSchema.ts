@@ -21,16 +21,18 @@ export const gamePlayerSchema = z
 /**
  * Schema for the top-level game document in the `games` collection.
  */
-export const gameDocumentSchema = z.object({
-  gameCode: z.string(),
-  gameType: z.string(),
-  hostUid: z.string(),
-  status: z.enum(['lobby', 'playing', 'finished']),
-  minPlayers: z.number(),
-  maxPlayers: z.number(),
-  createdAt: timestampSchema,
-  players: z.record(z.string(), gamePlayerSchema),
-});
+export const gameDocumentSchema = z
+  .object({
+    gameCode: z.string(),
+    gameType: z.string(),
+    hostUid: z.string(),
+    status: z.enum(['lobby', 'playing', 'finished']),
+    minPlayers: z.number(),
+    maxPlayers: z.number(),
+    createdAt: timestampSchema,
+    players: z.record(z.string(), gamePlayerSchema),
+  })
+  .passthrough();
 
 export type GameDocumentParsed = z.infer<typeof gameDocumentSchema>;
 

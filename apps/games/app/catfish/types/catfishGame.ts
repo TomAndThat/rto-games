@@ -14,6 +14,30 @@ export const CatfishPhaseType = {
 export type CatfishPhaseType =
   (typeof CatfishPhaseType)[keyof typeof CatfishPhaseType];
 
+/**
+ * Maximum subStep value for each prompt phase type.
+ * When subStep reaches this value the server advances currentPhaseIndex.
+ */
+export const CATFISH_MAX_SUBSTEP: Record<string, number> = {
+  [CatfishPhaseType.TextPromptIntro]: 5,
+  [CatfishPhaseType.TextPrompt]: 2,
+  [CatfishPhaseType.ImagePrompt]: 2,
+};
+
+/**
+ * Maps phase type + subStep → which index in `answerers` is responding.
+ * Only prompt subSteps are included; message subSteps are absent.
+ *
+ * textPromptIntro: 1→0 (own), 3→1 (catfish 1), 4→2 (catfish 2)
+ * textPrompt:      0→0,        1→1,              2→2
+ * imagePrompt:     0→0,        1→1,              2→2
+ */
+export const CATFISH_SUBSTEP_ANSWERER_INDEX: Record<string, Record<number, number>> = {
+  [CatfishPhaseType.TextPromptIntro]: { 1: 0, 3: 1, 4: 2 },
+  [CatfishPhaseType.TextPrompt]: { 0: 0, 1: 1, 2: 2 },
+  [CatfishPhaseType.ImagePrompt]: { 0: 0, 1: 1, 2: 2 },
+};
+
 // ---------------------------------------------------------------------------
 // Prompt phase
 // ---------------------------------------------------------------------------
@@ -31,6 +55,12 @@ export interface CatfishPromptEntry {
   /** Pre-computed display order shown to voters; same for all clients */
   shuffledAnswerers: [string, string, string];
   /**
+   * Resolved catfish instruction shown to answerers[1] and answerers[2].
+   * e.g. "Put yourself in Alice's shoes and answer this"
+   * Stored resolved (player name substituted) at startGame time.
+   */
+  catfishInstructionText: string;
+  /**
    * Keyed by answererId.
    * string = submitted answer (text) or Firebase Storage URL (image).
    * null = timed out or no submission.
@@ -43,8 +73,25 @@ export interface CatfishPromptPhase {
     | typeof CatfishPhaseType.TextPromptIntro
     | typeof CatfishPhaseType.TextPrompt
     | typeof CatfishPhaseType.ImagePrompt;
-  /** Which of the 3 questions the room is currently answering (0–2) */
-  questionIndex: number;
+  /**
+   * Index of the current sub-step within this phase. Incremented by the
+   * server (host skip or timer expiry) — all clients derive their view from
+   * this value.
+   *
+   * textPromptIntro sub-steps:
+   *   0 → Message 1 (Welcome)
+   *   1 → Prompt q0  (real player answers their own prompt)
+   *   2 → Message 2  (catfish instructions)
+   *   3 → Prompt q1  (catfish answer 1)
+   *   4 → Prompt q2  (catfish answer 2)
+   *   5 → Message 3  (pre-voting)
+   *
+   * textPrompt / imagePrompt sub-steps:
+   *   0 → Prompt q0
+   *   1 → Prompt q1
+   *   2 → Prompt q2
+   */
+  subStep: number;
   /** Keyed by the prompt owner's player UID */
   prompts: Record<string, CatfishPromptEntry>;
 }

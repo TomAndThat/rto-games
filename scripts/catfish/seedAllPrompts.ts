@@ -274,6 +274,33 @@ const votingPrompts = [
   'Can you spot which one is the true {playerName}?',
 ];
 
+/**
+ * Catfish instruction prompt templates.
+ * `{playerName}` is substituted server-side at startGame time.
+ */
+const catfishInstructionPrompts = [
+  'Put yourself in {playerName}\u2019s shoes and answer this',
+  'How do you think {playerName} would respond to this?',
+  'Channel your inner {playerName} and answer as they would',
+  'Imagine you\u2019re {playerName}\u2026',
+  'Think like {playerName} and give their honest answer',
+  'You are {playerName}. What do you say?',
+  'Pretend you\u2019re {playerName} for this one\u2026',
+  'What would {playerName} say to this?',
+  'Step into {playerName}\u2019s world and answer honestly',
+  'Become {playerName} and give their genuine response',
+  'Get inside {playerName}\u2019s head for this one',
+  'Answer this the way {playerName} would',
+  'Try to think exactly like {playerName} would',
+  'Give {playerName}\u2019s authentic answer to this',
+  'Convince everyone you\u2019re {playerName} with your answer',
+  'Do your best {playerName} impression here',
+  'Answer this as {playerName} would \u2014 try to be convincing',
+  'Walk a mile in {playerName}\u2019s shoes for this one',
+  'What\u2019s going through {playerName}\u2019s head when they see this?',
+  'Be {playerName}. Answer honestly, as they would',
+];
+
 async function seedAllPrompts(useEmulator: boolean = true) {
   const db = initializeFirebaseAdmin({ useEmulator });
 
@@ -323,7 +350,21 @@ async function seedAllPrompts(useEmulator: boolean = true) {
   await votingBatch.commit();
   console.log(`✓ Successfully seeded ${votingPrompts.length} voting prompts\n`);
 
-  const total = textPrompts.length + imagePrompts.length + votingPrompts.length;
+  // Seed catfish instruction prompts
+  console.log(`Seeding ${catfishInstructionPrompts.length} catfish instruction prompts...`);
+  const instructionBatch = db.batch();
+  for (const text of catfishInstructionPrompts) {
+    const docRef = db.collection('catfishInstructionPrompts').doc();
+    instructionBatch.set(docRef, {
+      text,
+      isActive: true,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+  }
+  await instructionBatch.commit();
+  console.log(`✓ Successfully seeded ${catfishInstructionPrompts.length} catfish instruction prompts\n`);
+
+  const total = textPrompts.length + imagePrompts.length + votingPrompts.length + catfishInstructionPrompts.length;
   console.log(`✓ All done! Seeded ${total} prompts total.`);
 }
 
